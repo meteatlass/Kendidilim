@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <title>Atlas Store</title>
+
+  <!-- iOS ana ekran ayarları -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Atlas Store" />
+
+  <!-- Genel PWA ayarları -->
+  <meta name="theme-color" content="#0f1220" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <!-- İKONLAR (index.html ile AYNI klasörde olacak!) -->
+  <link rel="apple-touch-icon" sizes="180x180" href="icon-180.png" />
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png" />
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png" />
+
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #0f1220;
+      color: #fff;
+      font-family: Arial, system-ui, -apple-system, BlinkMacSystemFont;
+      overscroll-behavior: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .wrap {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 24px;
+    }
+    .card {
+      max-width: 420px;
+      width: 100%;
+      background: #14183a;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,.35);
+    }
+    h1 { color: #00ffd5; margin: 0 0 12px; }
+    p { opacity: .9; }
+    .btn {
+      margin-top: 14px;
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 12px;
+      background: #00ffd5;
+      color: #000;
+      font-weight: 700;
+      font-size: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>🛒 Atlas Store</h1>
+      <p>Ana ekrana eklendiğinde uygulama gibi açılır.</p>
+      <button class="btn" onclick="alert('Çalışıyor!')">Test</button>
+    </div>
+  </div>
+</body>
+</html>

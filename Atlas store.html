@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+
+<title>Atlas Store</title>
+
+<!-- iOS ana ekran ayarları -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Atlas Store">
+
+<!-- Tema rengi -->
+<meta name="theme-color" content="#0f1220">
+
+<!-- Uygulama ikonları -->
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+<link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+
+<style>
+  body{margin:0;font-family:Arial;background:#0f1220;color:#fff}
+  #store,#appScreen,#loading{padding:15px}
+  h1{text-align:center;color:#00ffd5}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+  .card{background:#1c1f3a;border-radius:12px;padding:12px;text-align:center}
+  button{padding:10px;border:none;border-radius:8px;background:#00ffd5;color:#000;font-weight:bold}
+  #appScreen,#loading{display:none}
+  .backBtn{background:#ff4d4d;color:#fff;margin-bottom:10px}
+  .bar{width:100%;height:20px;background:#222;border-radius:10px;overflow:hidden}
+  .fill{height:100%;width:0;background:#00ffd5}
+  .touchBtn{width:100%;padding:14px;margin-top:8px;border-radius:10px}
+  .area{width:100%;height:120px;background:#111;border-radius:10px;position:relative;overflow:hidden}
+  .player{width:40px;height:40px;background:#00ffd5;border-radius:50%;position:absolute;left:0;top:40px}
+  .enemy{width:30px;height:30px;background:red;position:absolute;right:0;top:45px}
+  img{width:100%;border-radius:10px;margin:6px 0}
+</style>
+</head>
+<body>
+
+<div id="store">
+  <h1>🛒 Atlas Store</h1>
+  <div class="grid">
+    <div class="card"><h3>🎮 Mini Oyun</h3><button onclick="startLoad('game')">Yükle</button></div>
+    <div class="card"><h3>🧠 BrainRod Quiz</h3><button onclick="startLoad('quiz')">Yükle</button></div>
+    <div class="card"><h3>🛠️ Kod Alanı</h3><button onclick="startLoad('code')">Yükle</button></div>
+    <div class="card"><h3>👾 Canavar Galerisi</h3><button onclick="startLoad('gallery')">Yükle</button></div>
+  </div>
+</div>
+
+<div id="loading">
+  <h2>⏳ Yükleniyor...</h2>
+  <div class="bar"><div class="fill" id="fill"></div></div>
+  <p id="percent">0%</p>
+</div>
+
+<div id="appScreen">
+  <button class="backBtn" onclick="backStore()">⬅ Atlas Store</button>
+  <div id="appContent"></div>
+</div>
+
+<script>
+const store = document.getElementById("store");
+const loading = document.getElementById("loading");
+const fill = document.getElementById("fill");
+const percent = document.getElementById("percent");
+const appScreen = document.getElementById("appScreen");
+const appContent = document.getElementById("appContent");
+
+let currentApp="";
+function startLoad(app){
+  currentApp=app;
+  store.style.display="none";
+  loading.style.display="block";
+  let w=0;
+  let i=setInterval(()=>{
+    w++;
+    fill.style.width=w+"%";
+    percent.innerText=w+"%";
+    if(w>=100){
+      clearInterval(i);
+      loading.style.display="none";
+      openApp(app);
+    }
+  },100);
+}
+
+/* 500 soruluk quiz */
+let quizIndex=0;
+let quiz=[];
+for(let i=1;i<=500;i++){
+  quiz.push({
+    q: i+". soru: Hangisi daha brainrot?",
+    a: ["Troll Kafa","Kitap"],
+    correct: 0
+  });
+}
+
+let pos=0;
+
+function openApp(t){
+  appScreen.style.display="block";
+
+  if(t==="game"){
+    pos=0;
+    appContent.innerHTML=`
+      <h2>🎮 Mini Oyun</h2>
+      <div class="area">
+        <div class="player" id="player"></div>
+        <div class="enemy"></div>
+      </div>
+      <button class="touchBtn" onclick="move()">👉 İlerle</button>
+      <p id="status"></p>`;
+  }
+
+  if(t==="quiz"){
+    quizIndex=0;
+    renderQuiz();
+  }
+
+  if(t==="code"){
+    appContent.innerHTML=`
+      <h2>🛠️ Kod Alanı</h2>
+      <textarea id="codeInput" style="width:100%;height:80px;">alert('Atlas');</textarea>
+      <button class="touchBtn" onclick="runCode()">Çalıştır</button>`;
+  }
+
+  if(t==="gallery"){
+    appContent.innerHTML=`
+      <h2>👾 Canavar Galerisi</h2>
+      <img src="https://picsum.photos/300/200?random=1">
+      <img src="https://picsum.photos/300/200?random=2">
+      <img src="https://picsum.photos/300/200?random=3">
+      <p>Yarı canavarlar (troll, ruhanna, glitch) buraya konur.</p>`;
+  }
+}
+
+function renderQuiz(){
+  let q=quiz[quizIndex];
+  appContent.innerHTML=`
+    <h2>🧠 BrainRod Quiz</h2>
+    <p>${q.q}</p>
+    <button class="touchBtn" onclick="answer(0)">${q.a[0]}</button>
+    <button class="touchBtn" onclick="answer(1)">${q.a[1]}</button>
+    <p>${quizIndex+1}/500</p>`;
+}
+
+function answer(i){
+  quizIndex++;
+  if(quizIndex>=quiz.length){
+    appContent.innerHTML="<h2>🎉 500 soruyu bitirdin!</h2>";
+  }else{
+    renderQuiz();
+  }
+}
+
+function move(){
+  pos+=20;
+  const player = document.getElementById("player");
+  const status = document.getElementById("status");
+  if(player) player.style.left=pos+"px";
+  if(status && pos>200) status.innerText="Kazandın (demo)";
+}
+
+function runCode(){
+  try{eval(document.getElementById("codeInput").value);}
+  catch(e){alert("Hata var");}
+}
+
+function backStore(){
+  appScreen.style.display="none";
+  store.style.display="block";
+}
+</script>
+
+</body>
+</html>

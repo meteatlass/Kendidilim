@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Annem İçin Özel Uygulama</title>
+
+<!-- iOS Ana Ekran İkonu -->
+<link rel="apple-touch-icon" sizes="180x180" href="icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Annem 💙">
+
+<!-- Android/Diğer -->
+<link rel="icon" sizes="192x192" href="icon-180.png">
+
+<style>
+  html,body{margin:0;padding:0;background:#0b0f1a;color:#fff;font-family:system-ui}
+  header{padding:14px;text-align:center;font-weight:900;background:linear-gradient(90deg,#ff9ad5,#8ee3ff)}
+  #tabs{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;padding:10px}
+  .tab{border:none;border-radius:999px;padding:8px 14px;font-weight:800;background:#1f2a44;color:#fff}
+  .tab.active{background:#00ffc8;color:#001b16}
+  .view{display:none;padding:12px}
+  .view.active{display:block}
+  .card{background:#121a2b;border-radius:14px;padding:12px;margin:10px 0}
+  .btn{border:none;border-radius:12px;padding:10px 12px;font-weight:800;background:#00ffc8;color:#001b16}
+  .grid{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;max-width:360px;margin:auto}
+  .tile{aspect-ratio:1;border-radius:8px;background:#223;display:flex;align-items:center;justify-content:center;font-size:20px}
+  .controls{display:flex;gap:8px;flex-wrap:wrap}
+  .slider{width:100%}
+  .msg{min-height:60px}
+  footer{opacity:.6;text-align:center;padding:10px}
+</style>
+</head>
+<body>
+<header>💙 Annem İçin Özel Uygulama</header>
+
+<div id="tabs">
+  <button class="tab active" data-tab="game">🧩 Oyun</button>
+  <button class="tab" data-tab="fairy">🧚‍♀️ Masal</button>
+  <button class="tab" data-tab="music">🎵 Müzik</button>
+  <button class="tab" data-tab="sleep">🌙 Uyku</button>
+  <button class="tab" data-tab="love">💌 Notlar</button>
+</div>
+
+<div class="view active" id="game">
+  <div class="card">
+    <b>Mini Eşleştirme</b>
+    <div class="grid" id="grid"></div>
+    <p>Skor: <span id="score">0</span></p>
+    <button class="btn" id="shuffle">Karıştır</button>
+  </div>
+</div>
+
+<div class="view" id="fairy">
+  <div class="card">
+    <b>Masal Kutusu</b>
+    <div class="msg" id="story"></div>
+    <button class="btn" id="newStory">Yeni Masal</button>
+  </div>
+</div>
+
+<div class="view" id="music">
+  <div class="card">
+    <b>Seslerle Müzik Yap</b>
+    <div class="controls">
+      <button class="btn" data-sound="bird">🐦 Kuş</button>
+      <button class="btn" data-sound="cow">🐮 İnek</button>
+      <button class="btn" data-sound="white">🌬️ Beyaz Gürültü</button>
+      <button class="btn" data-sound="pink">🌸 Pembe Gürültü</button>
+      <button class="btn" id="stopAll">⏹️ Hepsini Durdur</button>
+    </div>
+    <input class="slider" id="vol" type="range" min="0" max="1" step="0.05" value="0.6"/>
+  </div>
+</div>
+
+<div class="view" id="sleep">
+  <div class="card">
+    <b>Uyku & Rahatlama</b>
+    <div class="controls">
+      <button class="btn" data-min="5">5 dk</button>
+      <button class="btn" data-min="15">15 dk</button>
+      <button class="btn" data-min="30">30 dk</button>
+      <button class="btn" id="saveMix">💾 Karışımı Kaydet</button>
+    </div>
+    <p id="timerInfo">Zamanlayıcı kapalı</p>
+  </div>
+</div>
+
+<div class="view" id="love">
+  <div class="card">
+    <b>Sürpriz Mesajlar</b>
+    <div class="msg" id="note"></div>
+    <button class="btn" id="newNote">Yeni Not</button>
+  </div>
+</div>
+
+<footer>Atlas’tan annesine sevgiyle 💙</footer>
+
+<script>
+/* TAB */
+document.querySelectorAll('.tab').forEach(b=>{
+  b.onclick=()=>{
+    document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById(b.dataset.tab).classList.add('active');
+  }
+});
+
+/* OYUN */
+const icons=["🍓","🍋","🍒","🫐","🍏","🍪"];
+const grid=document.getElementById('grid');
+let score=0, first=null;
+function makeGrid(){
+  grid.innerHTML="";
+  for(let i=0;i<36;i++){
+    const d=document.createElement('div');
+    d.className="tile";
+    d.textContent=icons[Math.floor(Math.random()*icons.length)];
+    d.onclick=()=>tap(d);
+    grid.appendChild(d);
+  }
+}
+function tap(el){
+  if(!first){ first=el; el.style.outline="2px solid #00ffc8"; return; }
+  if(first.textContent===el.textContent){
+    score+=10; document.getElementById('score').textContent=score;
+    first.textContent="✨"; el.textContent="✨";
+    setTimeout(()=>{first.textContent=icons[Math.floor(Math.random()*icons.length)];
+                    el.textContent=icons[Math.floor(Math.random()*icons.length)]},300);
+  }
+  first.style.outline=""; first=null;
+}
+document.getElementById('shuffle').onclick=makeGrid; makeGrid();
+
+/* MASAL */
+const stories=[
+"Bir varmis bir yokmus kalbi sarki soyleyen bir kus varmis",
+"Ormanda yasayan kucuk bir yildiz geceleri isik olurmus",
+"Bir dere kenarinda inekler ritim tutarmis",
+"Gokyuzunden dusen pembe bulut dokunanin icini ferahlatirmis"
+];
+newStory.onclick=()=>{ story.textContent=stories[Math.floor(Math.random()*stories.length)]; };
+newStory.click();
+
+/* SES */
+const ctx=new (window.AudioContext||window.webkitAudioContext)();
+let nodes={};
+function play(type){
+  if(nodes[type]) return;
+  let src, gain=ctx.createGain(); gain.gain.value=vol.value;
+  if(type==="white"||type==="pink"){
+    const buffer=ctx.createBuffer(1, ctx.sampleRate*2, ctx.sampleRate);
+    const data=buffer.getChannelData(0);
+    for(let i=0;i<data.length;i++) data[i]=Math.random()*2-1;
+    src=ctx.createBufferSource(); src.buffer=buffer; src.loop=true;
+  } else {
+    const osc=ctx.createOscillator();
+    osc.type="sine"; osc.frequency.value= type==="bird"?1200: type==="cow"?180: 440;
+    src=osc;
+  }
+  src.connect(gain).connect(ctx.destination); src.start();
+  nodes[type]={src,gain};
+}
+function stopAll(){ Object.values(nodes).forEach(n=>{try{n.src.stop()}catch(e){}}); nodes={}; }
+document.querySelectorAll('[data-sound]').forEach(b=>b.onclick=()=>play(b.dataset.sound));
+stopAll.onclick=stopAll; vol.oninput=()=>Object.values(nodes).forEach(n=>n.gain.gain.value=vol.value);
+
+/* UYKU */
+let t=null;
+document.querySelectorAll('[data-min]').forEach(b=>b.onclick=()=>{
+  if(t) clearTimeout(t);
+  const ms=+b.dataset.min*60000;
+  timerInfo.textContent=`${b.dataset.min} dk sonra kapanacak`;
+  t=setTimeout(()=>{ stopAll(); timerInfo.textContent="Kapatildi"; }, ms);
+});
+saveMix.onclick=()=>{ localStorage.setItem("mix", JSON.stringify(Object.keys(nodes))); alert("Kaydedildi!"); };
+
+/* NOT */
+const notes=["Canim annem iyi ki varsin","Gulusun evi aydinlatiyor","Bugun de harikasin","Seni cok seviyorum"];
+newNote.onclick=()=> note.textContent=notes[Math.floor(Math.random()*notes.length)];
+newNote.click();
+</script>
+</body>
+</html>

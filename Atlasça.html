@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<title>Atlas Game Engine v2.0</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no">
+<style>
+body{margin:0;background:#111;color:white;font-family:monospace;overflow:hidden}
+#ui{position:fixed;top:0;left:0;right:0;padding:6px;background:#000}
+textarea{width:100%;height:120px;background:#000;color:#0f0}
+canvas{background:#222;display:block}
+#ctrl{position:fixed;bottom:10px;left:0;right:0;display:flex;justify-content:space-between;padding:10px}
+.btn{width:70px;height:70px;border-radius:50%;background:#333;color:white;
+display:flex;align-items:center;justify-content:center;font-size:28px}
+</style>
+</head>
+
+<body>
+
+<div id="ui">
+<textarea id="kod">
+oyunbasla
+
+level 1
+
+oyuncu can 3
+oyuncu hiz 5
+oyuncu ziplama 14
+
+dusman ekle x 500 y 300 can 2 hiz 2
+dusman ekle x 800 y 300 can 3 hiz 1
+
+platform ekle x 0 y 350 w 2000 h 20
+platform ekle x 300 y 280 w 120 h 15
+platform ekle x 600 y 240 w 120 h 15
+
+muzik basla
+
+oyunbitir
+</textarea>
+<button onclick="atlasCalistir()">▶️ ATLASÇA ÇALIŞTIR</button>
+</div>
+
+<canvas id="c" width="1000" height="400"></canvas>
+
+<div id="ctrl">
+  <div class="btn" id="sol">⬅️</div>
+  <div class="btn" id="zip">⬆️</div>
+  <div class="btn" id="sag">➡️</div>
+</div>
+
+<script>
+/* ========= ATLAS GAME ENGINE v2 ========= */
+
+const c=document.getElementById("c"),ctx=c.getContext("2d");
+
+/* KAMERA */
+let camX=0;
+
+/* OYUNCU */
+const player={x:100,y:0,w:30,h:30,vx:0,vy:0,hiz:5,z:14,can:3,yerde:false};
+
+/* DÜNYA */
+const gravity=0.6;
+let platforms=[],enemies=[],level=1;
+
+/* SES */
+const music=new Audio("https://cdn.pixabay.com/audio/2022/10/16/audio_8b8d03a91f.mp3");
+music.loop=true;
+
+/* KONTROLLER */
+const key={};
+onkeydown=e=>key[e.code]=true;
+onkeyup=e=>key[e.code]=false;
+
+function touch(id,fn){
+  const b=document.getElementById(id);
+  b.ontouchstart=e=>{e.preventDefault();fn(true)};
+  b.ontouchend=e=>{e.preventDefault();fn(false)};
+}
+touch("sol",v=>key.left=v);
+touch("sag",v=>key.right=v);
+touch("zip",v=>key.jump=v);
+
+/* ATLASÇA OKUYUCU */
+function atlasCalistir(){
+  platforms=[];enemies=[];
+  const lines=document.getElementById("kod").value.split("\n");
+  for(let l of lines){
+    const p=l.trim().split(" ");
+    if(p[0]==="level") level=Number(p[1]);
+    if(p[0]==="oyuncu"&&p[1]==="can") player.can=Number(p[2]);
+    if(p[0]==="oyuncu"&&p[1]==="hiz") player.hiz=Number(p[2]);
+    if(p[0]==="oyuncu"&&p[1]==="ziplama") player.z=Number(p[2]);
+
+    if(p[0]==="dusman"){
+      enemies.push({x:+p[3],y:+p[5],w:30,h:30,vx:+p[9],can:+p[7]});
+    }
+
+    if(p[0]==="platform"){
+      platforms.push({x:+p[3],y:+p[5],w:+p[7],h:+p[9]});
+    }
+
+    if(p[0]==="muzik") music.play();
+  }
+}
+
+/* ÇARPIŞMA */
+function hit(a,b){
+  return a.x<a.x+b.w && a.x+a.w>b.x && a.y<a.y+b.h && a.y+a.h>b.y;
+}
+
+/* LOOP */
+function update(){
+  player.vx=0;
+  if(key.left) player.vx=-player.hiz;
+  if(key.right) player.vx=player.hiz;
+  if((key.jump||key["Space"])&&player.yerde){player.vy=-player.z;player.yerde=false}
+
+  player.vy+=gravity;
+  player.x+=player.vx;
+  player.y+=player.vy;
+
+  player.yerde=false;
+  for(let p of platforms){
+    if(player.x+player.w>p.x&&player.x<p.x+p.w&&player.y+player.h>p.y&&player.y+player.h<p.y+20){
+      player.y=p.y-player.h;player.vy=0;player.yerde=true;
+    }
+  }
+
+  enemies.forEach(e=>{
+    e.x+=e.vx;
+    if(hit(player,e)){
+      player.can--;
+      e.can--;
+      if(e.can<=0) enemies=enemies.filter(x=>x!==e);
+    }
+  });
+
+  camX=player.x-200;
+}
+
+function draw(){
+  ctx.clearRect(0,0,c.width,c.height);
+  ctx.save();
+  ctx.translate(-camX,0);
+
+  ctx.fillStyle="#444";
+  platforms.forEach(p=>ctx.fillRect(p.x,p.y,p.w,p.h));
+
+  ctx.fillStyle="#f44";
+  enemies.forEach(e=>ctx.fillRect(e.x,e.y,e.w,e.h));
+
+  ctx.fillStyle="#4af";
+  ctx.fillRect(player.x,player.y,player.w,player.h);
+
+  ctx.restore();
+
+  ctx.fillStyle="white";
+  ctx.fillText("Can: "+player.can+" | Level: "+level,10,15);
+}
+
+function loop(){
+  update();
+  draw();
+  requestAnimationFrame(loop);
+}
+loop();
+</script>
+
+</body>
+</html>

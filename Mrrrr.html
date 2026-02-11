@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+<title>Atlas App</title>
+
+<!-- Ana ekrana eklenince ikon ve app gibi açılması -->
+<link rel="apple-touch-icon" href="https://i.imgur.com/7QpX5Gq.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Atlas App">
+
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui, -apple-system, Arial;
+  background:#0b0f1a;
+  color:#fff;
+}
+#screen{
+  min-height:100vh;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:20px;
+}
+.card{
+  width:100%;
+  max-width:420px;
+  background:#121a2b;
+  border-radius:16px;
+  padding:16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+h1{margin:0 0 10px 0; text-align:center}
+input, textarea, button{
+  width:100%;
+  padding:12px;
+  border-radius:10px;
+  border:none;
+  outline:none;
+  margin-top:8px;
+  font-size:16px;
+}
+input, textarea{background:#0b1222;color:#fff}
+button{
+  background:#00ffd5;
+  color:#000;
+  font-weight:900;
+  cursor:pointer;
+}
+.small{font-size:12px;opacity:.7;text-align:center;margin-top:8px}
+.row{display:flex;gap:8px}
+.row button{flex:1}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<div id="screen"></div>
+
+<script>
+const screen = document.getElementById("screen");
+
+function loginScreen(){
+  screen.innerHTML = `
+  <div class="card">
+    <h1>Uygulamaya Giriş</h1>
+    <input id="mail" placeholder="E-posta" />
+    <input id="pass" placeholder="Şifre" type="password"/>
+    <button onclick="login()">Giriş Yap</button>
+    <div class="small">Bilgiler cihazda saklanır</div>
+  </div>`;
+}
+
+function infoForm(){
+  screen.innerHTML = `
+  <div class="card">
+    <h1>Bilgi Formu</h1>
+    <input id="ad" placeholder="Ad Soyad" />
+    <input id="yas" placeholder="Yaş" />
+    <input id="sehir" placeholder="Şehir" />
+    <textarea id="not" placeholder="Notlar"></textarea>
+    <div class="row">
+      <button onclick="saveInfo()">Kaydet</button>
+      <button onclick="logout()">Çıkış</button>
+    </div>
+  </div>`;
+  
+  const data = JSON.parse(localStorage.getItem("atlas_info")||"{}");
+  if(data.ad) document.getElementById("ad").value = data.ad;
+  if(data.yas) document.getElementById("yas").value = data.yas;
+  if(data.sehir) document.getElementById("sehir").value = data.sehir;
+  if(data.not) document.getElementById("not").value = data.not;
+}
+
+function login(){
+  const mail = document.getElementById("mail").value.trim();
+  const pass = document.getElementById("pass").value.trim();
+  if(!mail || !pass){ alert("E-posta ve şifre gir"); return; }
+  localStorage.setItem("atlas_login","1");
+  infoForm();
+}
+
+function saveInfo(){
+  const info = {
+    ad: ad.value,
+    yas: yas.value,
+    sehir: sehir.value,
+    not: not.value
+  };
+  localStorage.setItem("atlas_info", JSON.stringify(info));
+  alert("Kaydedildi ✔️");
+}
+
+function logout(){
+  localStorage.removeItem("atlas_login");
+  loginScreen();
+}
+
+if(localStorage.getItem("atlas_login")){
+  infoForm();
+}else{
+  loginScreen();
+}
+</script>
+
+</body>
+</html>

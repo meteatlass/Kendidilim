@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atlas Studious – Kasa</title>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0f1220"/>
+<style>
+  html,body{margin:0;padding:0;background:#0f1220;color:#fff;font-family:system-ui,Arial}
+  #splash{position:fixed;inset:0;display:grid;place-items:center;z-index:9;background:#0f1220;animation:fade 5s forwards}
+  #splash h1{letter-spacing:3px;color:#00ffd5;font-size:36px}
+  @keyframes fade{0%,70%{opacity:1}100%{opacity:0;visibility:hidden}}
+  .wrap{padding:16px;max-width:680px;margin:auto}
+  .card{background:#14183a;border-radius:14px;padding:14px;margin-bottom:12px}
+  h2{color:#00ffd5;margin:0 0 8px}
+  input{width:100%;padding:10px;border-radius:10px;border:0;margin:6px 0}
+  button{width:100%;padding:12px;border:0;border-radius:12px;background:#00ffd5;color:#000;font-weight:700;margin-top:8px}
+  .ghost{background:#2b2f6a;color:#fff}
+  .row{opacity:.9;margin:4px 0}
+  .hide{display:none}
+  .list{border-top:1px solid rgba(255,255,255,.1); margin-top:8px; padding-top:8px}
+  .item{padding:8px 0; border-bottom:1px dashed rgba(255,255,255,.15)}
+</style>
+</head>
+<body>
+
+<div id="splash"><h1>ATLAS STUDIOUS</h1></div>
+
+<div class="wrap">
+  <div id="login" class="card">
+    <h2>Kullanıcı Adı</h2>
+    <input id="username" placeholder="Kullanıcı adını yaz"/>
+    <button onclick="login()">Devam</button>
+  </div>
+
+  <div id="form" class="card hide">
+    <h2>Bilgiler (kendi bilgilerin)</h2>
+    <input id="email" placeholder="E-posta"/>
+    <input id="pass" placeholder="Tablet/telefon şifresi (kullanıcı yazar)"/>
+    <input id="i1" placeholder="Bilgi 1"/>
+    <input id="i2" placeholder="Bilgi 2"/>
+    <input id="i3" placeholder="Bilgi 3"/>
+    <input id="i4" placeholder="Bilgi 4"/>
+    <button onclick="saveInfo()">Kasaya Kilitle</button>
+    <button class="ghost" onclick="logout()">Başka kullanıcı adıyla gir</button>
+  </div>
+
+  <div id="vault" class="card hide">
+    <h2 id="vaultTitle">Kasa</h2>
+    <div id="out"></div>
+    <button onclick="lock()">Kilitle</button>
+    <button class="ghost" onclick="logout()">Başka kullanıcı adıyla gir</button>
+  </div>
+
+  <div id="unlock" class="card hide">
+    <h2>Kasa Kilitli</h2>
+    <input id="vaultPass" placeholder="Kasa şifresi"/>
+    <button onclick="unlock()">Kasayı Aç</button>
+    <button class="ghost" onclick="logout()">Başka kullanıcı adıyla gir</button>
+  </div>
+
+  <div id="setVaultPass" class="card hide">
+    <h2>Kasa Şifresi Belirle</h2>
+    <input id="setPass" placeholder="Yeni kasa şifresi"/>
+    <button onclick="setPass()">Ayarla</button>
+    <button class="ghost" onclick="logout()">Başka kullanıcı adıyla gir</button>
+  </div>
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function getAll(){
+  return JSON.parse(localStorage.getItem("vaultAll") || "{}");
+}
+function setAll(obj){
+  localStorage.setItem("vaultAll", JSON.stringify(obj));
+}
+
+function resetViews(){
+  ["login","form","vault","unlock","setVaultPass"].forEach(id=>$(id).classList.add("hide"));
+}
+
+function login(){
+  const name = $("username").value.trim();
+  if(!name) return alert("Kullanıcı adı yaz");
+  localStorage.setItem("user", name);
+  resetViews();
+
+  const all = getAll();
+  if(name === "ATLAS77"){
+    renderAll(all);
+  }else if(all[name]){
+    $("unlock").classList.remove("hide");
+  }else{
+    $("form").classList.remove("hide");
+  }
+}
+
+function saveInfo(){
+  const user = localStorage.getItem("user");
+  const all = getAll();
+  all[user] = {
+    user,
+    email: $("email").value,
+    pass: $("pass").value,
+    i1: $("i1").value,
+    i2: $("i2").value,
+    i3: $("i3").value,
+    i4: $("i4").value,
+  };
+  setAll(all);
+
+  resetViews();
+  if(!localStorage.getItem("vaultPass")){
+    $("setVaultPass").classList.remove("hide");
+  }else{
+    renderOne(user);
+  }
+}
+
+function setPass(){
+  const p = $("setPass").value;
+  if(!p) return alert("Şifre gir");
+  localStorage.setItem("vaultPass", p);
+  resetViews();
+  const user = localStorage.getItem("user");
+  renderOne(user);
+}
+
+function renderOne(name){
+  const all = getAll();
+  const d = all[name];
+  if(!d){ $("form").classList.remove("hide"); return; }
+  $("vaultTitle").innerText = "Kasa – " + name;
+  $("out").innerHTML = `
+    <div class="item">
+      <b>${d.user}:</b><br/>
+      E-posta: ${d.email}<br/>
+      Tablet/telefon şifresi: ${d.pass}<br/>
+      Bilgi1: ${d.i1}<br/>
+      Bilgi2: ${d.i2}<br/>
+      Bilgi3: ${d.i3}<br/>
+      Bilgi4: ${d.i4}
+    </div>
+  `;
+  $("vault").classList.remove("hide");
+}
+
+function renderAll(all){
+  $("vaultTitle").innerText = "Kasa – Tüm Kullanıcılar (ATLAS77)";
+  let html = "";
+  Object.keys(all).forEach(k=>{
+    const d = all[k];
+    html += `
+      <div class="item">
+        <b>${d.user}:</b><br/>
+        E-posta: ${d.email}<br/>
+        Tablet/telefon şifresi: ${d.pass}<br/>
+        Bilgi1: ${d.i1}<br/>
+        Bilgi2: ${d.i2}<br/>
+        Bilgi3: ${d.i3}<br/>
+        Bilgi4: ${d.i4}
+      </div>
+    `;
+  });
+  $("out").innerHTML = html || "<i>Henüz kayıt yok</i>";
+  $("vault").classList.remove("hide");
+}
+
+function lock(){
+  resetViews();
+  $("unlock").classList.remove("hide");
+}
+
+function unlock(){
+  const name = localStorage.getItem("user");
+  if(name === "ATLAS77"){
+    renderAll(getAll());
+    return;
+  }
+  const p = $("vaultPass").value;
+  if(p === localStorage.getItem("vaultPass")){
+    resetViews();
+    renderOne(name);
+  }else{
+    alert("Şifre yanlış");
+  }
+}
+
+function logout(){
+  localStorage.removeItem("user");
+  $("username").value = "";
+  resetViews();
+  $("login").classList.remove("hide");
+}
+</script>
+
+</body>
+</html>

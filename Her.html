@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Atlas Studious</title>
+
+  <!-- Ana ekrana eklenince güzel ikon -->
+  <link rel="apple-touch-icon" href="https://i.imgur.com/6qK6w9n.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+  <style>
+    body {
+      margin: 0;
+      background: #0f1220;
+      color: white;
+      font-family: Arial, sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    #splash {
+      font-size: 32px;
+      font-weight: bold;
+      opacity: 1;
+      transition: opacity 5s linear;
+    }
+    #app {
+      display: none;
+      text-align: center;
+    }
+    input, button {
+      padding: 12px;
+      border-radius: 8px;
+      border: none;
+      margin: 6px;
+      font-size: 16px;
+    }
+    button {
+      background: #00ffd5;
+      font-weight: bold;
+    }
+    .box {
+      background: #1c1f3a;
+      padding: 12px;
+      border-radius: 10px;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="splash">ATLAS STUDIOUS</div>
+
+<div id="app">
+  <h2>👤 Kullanıcı Girişi</h2>
+  <input id="username" placeholder="Kullanıcı adı">
+  <button onclick="login()">Giriş</button>
+
+  <div id="panel" style="display:none" class="box"></div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyCXZnWsRi68dz5uBx0Hmyla8wNssFddvG4",
+    authDomain: "attt-3d31e.firebaseapp.com",
+    projectId: "attt-3d31e",
+    storageBucket: "attt-3d31e.appspot.com",
+    messagingSenderId: "31268659423",
+    appId: "1:31268659423:web:1afa6bc24900d3966b896a"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  setTimeout(() => {
+    document.getElementById("splash").style.opacity = 0;
+    setTimeout(() => {
+      document.getElementById("splash").style.display = "none";
+      document.getElementById("app").style.display = "block";
+    }, 5000);
+  }, 100);
+
+  window.login = async function () {
+    const u = username.value.trim();
+    if (!u) return alert("Kullanıcı adı gir");
+
+    const ref = doc(db, "users", u);
+    const snap = await getDoc(ref);
+
+    if (!snap.exists()) {
+      await setDoc(ref, { name: u, created: Date.now() });
+    }
+
+    panel.style.display = "block";
+
+    if (u === "ATLAS77") {
+      const all = await getDocs(collection(db, "users"));
+      let html = "<h3>👑 Uygulama Kurucusu</h3>";
+      all.forEach(d => {
+        html += `<p>👤 ${d.id}</p>`;
+      });
+      panel.innerHTML = html;
+    } else {
+      panel.innerHTML = `
+        <p>Hoşgeldin: <b>${u}</b></p>
+        <button onclick="alert('ATLAS77’ye şifremi unuttum isteği gönderildi')">Şifremi Unuttum</button>
+      `;
+    }
+  };
+</script>
+
+</body>
+</html>

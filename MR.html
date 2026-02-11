@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Atlas Studious</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<style>
+  body{margin:0;background:#0f1220;color:#fff;font-family:system-ui}
+  .wrap{max-width:800px;margin:auto;padding:16px}
+  .card{background:#14183a;border-radius:14px;padding:14px;margin-bottom:12px}
+  h2{color:#00ffd5;margin:0 0 8px}
+  input,button{width:100%;padding:12px;border-radius:10px;border:0;margin-top:6px}
+  button{background:#00ffd5;color:#000;font-weight:700}
+  .ghost{background:#2b2f6a;color:#fff}
+  .item{border-bottom:1px dashed rgba(255,255,255,.2);padding:8px 0}
+  .hide{display:none}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+
+  <div id="login" class="card">
+    <h2>Kullanıcı Adı</h2>
+    <input id="username" placeholder="Örn: A77">
+    <button onclick="login()">Giriş / Kayıt</button>
+  </div>
+
+  <div id="userPanel" class="card hide">
+    <h2 id="userTitle"></h2>
+    <p>Bu hesap localStorage’da kayıtlıdır.</p>
+    <button onclick="logout()" class="ghost">Başka kullanıcı adıyla gir</button>
+  </div>
+
+  <div id="adminPanel" class="card hide">
+    <h2>ATLAS77 – Tüm Kayıtlı Hesaplar</h2>
+    <div id="allUsers"></div>
+    <button onclick="logout()" class="ghost">Çıkış</button>
+  </div>
+
+</div>
+
+<script>
+const $ = id => document.getElementById(id);
+
+function getAll(){
+  return JSON.parse(localStorage.getItem("accounts") || "{}");
+}
+function setAll(o){
+  localStorage.setItem("accounts", JSON.stringify(o));
+}
+
+function login(){
+  const name = $("username").value.trim();
+  if(!name) return alert("Kullanıcı adı yaz");
+
+  let all = getAll();
+
+  // Eğer yoksa oluştur
+  if(!all[name]){
+    all[name] = { user: name, createdAt: new Date().toLocaleString() };
+    setAll(all);
+  }
+
+  localStorage.setItem("currentUser", name);
+  showPanel(name);
+}
+
+function showPanel(name){
+  $("login").classList.add("hide");
+
+  if(name === "ATLAS77"){
+    $("adminPanel").classList.remove("hide");
+    renderAllUsers();
+  } else {
+    $("userPanel").classList.remove("hide");
+    $("userTitle").innerText = "Hoşgeldin: " + name;
+  }
+}
+
+function renderAllUsers(){
+  const all = getAll();
+  let html = "";
+  Object.keys(all).forEach(u=>{
+    html += `<div class="item"><b>${u}</b> — ${all[u].createdAt}</div>`;
+  });
+  $("allUsers").innerHTML = html || "<i>Henüz hesap yok</i>";
+}
+
+function logout(){
+  localStorage.removeItem("currentUser");
+  $("username").value = "";
+  $("login").classList.remove("hide");
+  $("userPanel").classList.add("hide");
+  $("adminPanel").classList.add("hide");
+}
+
+// Sayfa yenilenince tekrar aynı hesapta kalsın
+const cu = localStorage.getItem("currentUser");
+if(cu){
+  showPanel(cu);
+}
+</script>
+
+</body>
+</html>

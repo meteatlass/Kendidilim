@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kokteyl Defteri</title>
+<style>
+  *{box-sizing:border-box;font-family:system-ui}
+  body{margin:0;background:#0f1220;color:#fff}
+  header{padding:14px;text-align:center;font-weight:900;font-size:22px;background:#161a2f}
+  nav{display:flex;gap:6px;padding:8px;position:sticky;top:0;background:#0f1220}
+  nav button{flex:1;padding:10px;border-radius:12px;border:none;background:#222857;color:#fff;font-weight:700}
+  nav button.active{background:#00ffc8;color:#001}
+  section{display:none;padding:12px}
+  section.active{display:block}
+  .card{background:#161a2f;border-radius:14px;padding:10px;margin-bottom:10px}
+  input,textarea{width:100%;padding:10px;border-radius:10px;border:none;margin:6px 0}
+  textarea{min-height:60px}
+  button.primary{background:#00ffc8;color:#001;border:none;border-radius:10px;padding:10px;font-weight:900}
+  button.danger{background:#ff5a5a;border:none;border-radius:10px;padding:8px;color:#000}
+  ul{list-style:none;padding:0;margin:0}
+  li{display:flex;align-items:center;justify-content:space-between;padding:8px;background:#1d2242;border-radius:10px;margin:6px 0}
+  small{opacity:.7}
+  .ok{color:#00ffc8;font-weight:900}
+  .no{color:#ff7a7a;font-weight:900}
+  .miss{color:#ffd166}
+</style>
+</head>
+<body>
+<header>🍹 Kokteyl Defteri</header>
+
+<nav>
+  <button id="tab1" class="active">Malzemelerim</button>
+  <button id="tab2">Eksiklerim</button>
+  <button id="tab3">Tariflerim</button>
+</nav>
+
+<section id="s1" class="active">
+  <div class="card">
+    <b>Malzeme Ekle</b>
+    <input id="matInput" placeholder="Örn: Limon, Nane, Soda..." />
+    <button class="primary" onclick="addMat()">Ekle</button>
+  </div>
+  <ul id="matList"></ul>
+</section>
+
+<section id="s2">
+  <div class="card">
+    <b>Eksik Malzeme Ekle</b>
+    <input id="missInput" placeholder="Örn: Rom, Tekila..." />
+    <button class="primary" onclick="addMiss()">Ekle</button>
+  </div>
+  <ul id="missList"></ul>
+</section>
+
+<section id="s3">
+  <div class="card">
+    <b>Yeni Tarif</b>
+    <input id="recName" placeholder="Kokteyl Adı" />
+    <textarea id="recMats" placeholder="Malzemeler (virgülle ayır)"></textarea>
+    <textarea id="recHow" placeholder="Yapılışı"></textarea>
+    <button class="primary" onclick="addRecipe()">Tarifi Kaydet</button>
+  </div>
+  <div id="recipes"></div>
+</section>
+
+<script>
+const db = JSON.parse(localStorage.getItem("kokteylDB")||'{"mats":[],"miss":[],"recipes":[]}');
+
+const tabs = [
+  {btn:tab1, sec:s1},
+  {btn:tab2, sec:s2},
+  {btn:tab3, sec:s3},
+];
+tabs.forEach(t=>{
+  t.btn.onclick=()=>{
+    tabs.forEach(x=>{x.btn.classList.remove("active");x.sec.classList.remove("active")});
+    t.btn.classList.add("active"); t.sec.classList.add("active");
+  }
+});
+
+function save(){ localStorage.setItem("kokteylDB", JSON.stringify(db)); render(); }
+
+function addMat(){
+  const v=matInput.value.trim();
+  if(!v) return;
+  db.mats.push(v); matInput.value=""; save();
+}
+function addMiss(){
+  const v=missInput.value.trim();
+  if(!v) return;
+  db.miss.push(v); missInput.value=""; save();
+}
+function del(type,i){ db[type].splice(i,1); save(); }
+
+function addRecipe(){
+  const name=recName.value.trim();
+  const mats=recMats.value.split(",").map(x=>x.trim()).filter(Boolean);
+  const how=recHow.value.trim();
+  if(!name||!mats.length) return alert("Ad ve malzeme gir");
+  db.recipes.push({name,mats,how});
+  recName.value=""; recMats.value=""; recHow.value=""; save();
+}
+
+function missingList(mats){
+  const have = db.mats.map(x=>x.toLowerCase());
+  return mats.filter(m=>!have.includes(m.toLowerCase()));
+}
+
+function render(){
+  matList.innerHTML = db.mats.map((m,i)=>`<li>${m}<button class="danger" onclick="del('mats',${i})">Sil</button></li>`).join("");
+  missList.innerHTML = db.miss.map((m,i)=>`<li>${m}<button class="danger" onclick="del('miss',${i})">Sil</button></li>`).join("");
+
+  recipes.innerHTML = db.recipes.map((r,i)=>{
+    const miss = missingList(r.mats);
+    return `
+    <div class="card">
+      <b>${r.name}</b>
+      <div><small>Malzemeler:</small> ${r.mats.join(", ")}</div>
+      <div>
+        <small>Durum:</small>
+        ${miss.length===0 
+          ? '<span class="ok">Yapılabilir ✅</span>' 
+          : '<span class="no">Eksik Var ❌</span>'}
+      </div>
+      ${miss.length ? `<div class="miss"><small>Eksik Olanlar:</small> ${miss.join(", ")}</div>` : ''}
+      <div><small>Yapılış:</small> ${r.how||"-"}</div>
+      <button class="danger" onclick="del('recipes',${i})">Tarifi Sil</button>
+    </div>`;
+  }).join("");
+}
+render();
+</script>
+</body>
+</html>

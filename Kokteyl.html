@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Kokteyl Defteri</title>
+<style>
+  *{box-sizing:border-box;font-family:system-ui}
+  body{margin:0;background:#0f1220;color:#fff}
+  body.vip-theme{background:#1a1028}
+  header{padding:10px;text-align:center;font-weight:900;font-size:20px;background:#161a2f}
+  body.vip-theme header{background:#2a1650}
+  nav{display:flex;gap:6px;padding:8px;position:sticky;top:0;background:#0f1220}
+  body.vip-theme nav{background:#1a1028}
+  nav button{flex:1;padding:10px;border-radius:12px;border:none;background:#222857;color:#fff;font-weight:700}
+  body.vip-theme nav button{background:#3a1f6b}
+  nav button.active{background:#00ffc8;color:#001}
+  body.vip-theme nav button.active{background:#ffd166;color:#2a1650}
+  section{display:none;padding:12px}
+  section.active{display:block}
+  .card{background:#161a2f;border-radius:14px;padding:10px;margin-bottom:10px}
+  body.vip-theme .card{background:#24104a}
+  input,textarea{width:100%;padding:10px;border-radius:10px;border:none;margin:6px 0}
+  textarea{min-height:60px}
+  button.primary{background:#00ffc8;color:#001;border:none;border-radius:10px;padding:10px;font-weight:900}
+  body.vip-theme button.primary{background:#ffd166;color:#2a1650}
+  button.secondary{background:#3a3f7a;color:#fff;border:none;border-radius:10px;padding:10px;font-weight:800}
+  body.vip-theme button.secondary{background:#4b2a8f}
+  button.danger{background:#ff5a5a;border:none;border-radius:10px;padding:8px;color:#000}
+  #login{position:fixed;inset:0;background:#0f1220;display:flex;align-items:center;justify-content:center;z-index:999}
+  #login .box{background:#161a2f;padding:16px;border-radius:16px;max-width:360px;width:92%}
+  #topBar{padding:6px 8px;text-align:center;background:#101433;font-weight:800;font-size:12px}
+  body.vip-theme #topBar{background:#2a1650}
+  #actions{display:flex;gap:6px;padding:6px}
+  #doctor{position:fixed;inset:0;background:#0f1220;display:none;flex-direction:column;z-index:998}
+  #doctor .panel{padding:10px}
+  .hr{height:1px;background:#2a2f66;margin:8px 0}
+</style>
+</head>
+<body>
+
+<div id="login">
+  <div class="box">
+    <b>Giriş</b>
+    <input id="uName" placeholder="Kullanıcı Adı" />
+    <input id="uPass" type="password" placeholder="Kart Şifresi (oyun içi)" />
+    <div style="opacity:.85;margin:6px 0">⏱️ 2 dakikada 1, 10 TL oyun parası düşer</div>
+    <button class="primary" onclick="doLogin()">Giriş Yap</button>
+    <div id="loginInfo" style="margin-top:6px;opacity:.8"></div>
+  </div>
+</div>
+
+<div id="doctor">
+  <div class="panel">
+    <b>🏦 Banka</b>
+    <div id="docInfo" style="font-size:12px;opacity:.85;margin:6px 0"></div>
+    <button class="secondary" onclick="playDoctor()">🩺 Doktorculuk (+250 TL)</button>
+    <button class="secondary" onclick="startQuiz()">🧠 20 Soru (+100.000 TL)</button>
+
+    <div class="hr"></div>
+    <b>💸 Para Gönder</b>
+    <input id="sendTo" placeholder="Alıcı kullanıcı adı" />
+    <input id="sendAmount" type="number" placeholder="Gönderilecek tutar" />
+    <input id="sendPass" type="password" placeholder="Kart şifren" />
+    <button class="primary" onclick="sendMoney()">Para Yolla</button>
+
+    <button class="secondary" onclick="exitDoctor()">Çık</button>
+    <div id="quizBox" style="margin-top:10px;display:none"></div>
+  </div>
+</div>
+
+<div id="topBar"></div>
+<div id="actions">
+  <button class="secondary" onclick="openVIP()">⭐ VIP Ol</button>
+  <button class="secondary" onclick="openBank()">🏦 Banka</button>
+  <button class="danger" onclick="logout()">Çıkış Yap</button>
+</div>
+
+<header>🍹 Kokteyl Defteri</header>
+
+<nav>
+  <button id="tab1" class="active">Malzemelerim</button>
+  <button id="tab2">Eksiklerim</button>
+  <button id="tab3">Tariflerim</button>
+</nav>
+
+<section id="s1" class="active">
+  <div class="card">
+    <b>Malzeme Ekle</b>
+    <input id="matInput" placeholder="Örn: Limon, Nane, Soda..." />
+    <button class="primary" onclick="addMat()">Ekle</button>
+  </div>
+  <ul id="matList"></ul>
+</section>
+
+<section id="s2">
+  <div class="card">
+    <b>Eksik Malzeme Ekle</b>
+    <input id="missInput" placeholder="Örn: Rom, Tekila..." />
+    <button class="primary" onclick="addMiss()">Ekle</button>
+  </div>
+  <ul id="missList"></ul>
+</section>
+
+<section id="s3">
+  <div class="card">
+    <b>Yeni Tarif</b>
+    <input id="recName" placeholder="Kokteyl Adı" />
+    <textarea id="recMats" placeholder="Malzemeler (virgülle ayır)"></textarea>
+    <textarea id="recHow" placeholder="Yapılışı"></textarea>
+    <button class="primary" onclick="addRecipe()">Tarifi Kaydet</button>
+  </div>
+  <div id="recipes"></div>
+</section>
+
+<script>
+const db = JSON.parse(localStorage.getItem("kokteylDB")||'{"mats":[],"miss":[],"recipes":[]}');
+const users = JSON.parse(localStorage.getItem("kokteylUsers")||'{}');
+
+const tabs = [
+  {btn:tab1, sec:s1},
+  {btn:tab2, sec:s2},
+  {btn:tab3, sec:s3},
+];
+tabs.forEach(t=>{
+  t.btn.onclick=()=>{
+    tabs.forEach(x=>{x.btn.classList.remove("active");x.sec.classList.remove("active")});
+    t.btn.classList.add("active"); t.sec.classList.add("active");
+  }
+});
+
+let user=null, drainTimer=null, tickTimer=null, docTimer=null;
+
+function getStartMoney(name){ return name==="Atlas77" ? 200000 : 2000; }
+function getPass(name){ return name==="Atlas77" ? "1105Ekin" : "1234"; }
+function isVIP(){ return user && user.vipUntil > Date.now(); }
+
+function resetApp(){
+  localStorage.removeItem("kokteylDB");
+  localStorage.removeItem("kokteylUsers");
+  alert("Paran bitti! Uygulama sıfırlandı.");
+  location.reload();
+}
+
+function applyOfflineDrain(){
+  if(!user || isVIP()) return;
+  const now = Date.now();
+  const last = user.lastDrain || now;
+  const diff = now - last;
+  const cycles = Math.floor(diff / 120000);
+  if(cycles>0){
+    const lose = cycles * 10;
+    user.money = Math.max(0, user.money - lose);
+    user.lastDrain = last + cycles * 120000;
+    users[user.name] = { ...users[user.name], money:user.money, vipUntil:user.vipUntil, lastDrain:user.lastDrain, lastDoctor:user.lastDoctor, doctorEnter:user.doctorEnter };
+    localStorage.setItem("kokteylUsers", JSON.stringify(users));
+    if(user.money<=0) resetApp();
+  }
+}
+
+function doLogin(){
+  const name=uName.value.trim(), pass=uPass.value;
+  if(!name||!pass) return loginInfo.textContent="Bilgileri gir";
+  if(pass!==getPass(name)) return loginInfo.textContent="Kart şifresi yanlış";
+  if(!users[name]) users[name]={ money:getStartMoney(name), vipUntil:0, lastDrain:Date.now(), lastDoctor:0, doctorEnter:0 };
+  user={ name, ...users[name] };
+  applyOfflineDrain();
+  localStorage.setItem("kokteylUsers", JSON.stringify(users));
+  document.getElementById("login").style.display="none";
+  startDrain(); startTick(); renderTop(); render(); applyTheme();
+}
+
+function logout(){
+  if(user){
+    users[user.name]={ money:user.money, vipUntil:user.vipUntil, lastDrain:user.lastDrain, lastDoctor:user.lastDoctor, doctorEnter:user.doctorEnter };
+    localStorage.setItem("kokteylUsers", JSON.stringify(users));
+  }
+  user=null; clearInterval(drainTimer); clearInterval(tickTimer); clearInterval(docTimer);
+  document.getElementById("login").style.display="flex";
+  document.body.classList.remove("vip-theme");
+}
+
+function startDrain(){
+  if(drainTimer) clearInterval(drainTimer);
+  drainTimer=setInterval(()=>{
+    if(!user||isVIP()) return;
+    user.money=Math.max(0,user.money-10);
+    user.lastDrain=Date.now();
+    users[user.name]={ ...users[user.name], money:user.money, vipUntil:user.vipUntil, lastDrain:user.lastDrain, lastDoctor:user.lastDoctor, doctorEnter:user.doctorEnter };
+    localStorage.setItem("kokteylUsers", JSON.stringify(users));
+    if(user.money<=0) resetApp();
+  },120000);
+}
+function startTick(){ if(tickTimer) clearInterval(tickTimer); tickTimer=setInterval(renderTop,1000); }
+
+function openVIP(){}
+function openBank(){ document.getElementById("doctor").style.display="flex"; }
+function playDoctor(){ alert("Doktorculuk çalışıyor."); }
+function exitDoctor(){ document.getElementById("doctor").style.display="none"; }
+
+function timeLeft(ms){
+  if(ms<=0) return "00:00";
+  const s=Math.floor(ms/1000), m=String(Math.floor(s/60)).padStart(2,'0'), ss=String(s%60).padStart(2,'0');
+  return `${m}:${ss}`;
+}
+function renderTop(){
+  if(!user) return;
+  const diff=Date.now()-user.lastDrain;
+  let next=120000-diff; if(next<0) next=120000;
+  const vipLeft=isVIP()?timeLeft(user.vipUntil-Date.now()):"VIP yok";
+  const badge=isVIP()?" ⭐":"";
+  topBar.textContent=`👤 ${user.name}${badge} | 💰 ${user.money} TL (oyun içi) | ⏱️ Sonraki düşüş: ${timeLeft(next)} | ⭐ VIP: ${vipLeft}`;
+}
+function applyTheme(){ if(isVIP()) document.body.classList.add("vip-theme"); else document.body.classList.remove("vip-theme"); }
+
+let quizState = JSON.parse(localStorage.getItem("quizState")||'{"q":0,"done":false}');
+const quizQs=["Türkiye'nin başkenti?","2+2 kaçtır?","Dünyanın uydusu?","Su kaç derecede donar?","En büyük gezegen?","Bir yılda kaç ay?","İnsan kaç parmak?","Güneş bir ... mıdır?","Türkiye para birimi?","Haftada kaç gün?","En hızlı kara hayvanı?","Kanı temizleyen organ?","Gökkuşağında kaç renk?","İstanbul hangi kıtada?","Kalbin görevi?","Bilgisayarın beyni?","Dünyanın şekli?","En soğuk kıta?","Elektriği ölçen alet?","Geceleri gördüğümüz ışık?"];
+const quizAs=["ankara","4","ay","0","jüpiter","12","10","yıldız","tl","7","çita","böbrek","7","avrupa","kan pompalamak","işlemci","küre","antarktika","ampermetre","ay"];
+
+function startQuiz(){ quizBox.style.display="block"; renderQuiz(); }
+function renderQuiz(){
+  if(quizState.done){ quizBox.innerHTML="<b>Bu testi bitirdin.</b>"; return; }
+  const i=quizState.q;
+  if(i>=20){
+    quizState.done=true; localStorage.setItem("quizState",JSON.stringify(quizState));
+    user.money+=100000; users[user.name].money=user.money; localStorage.setItem("kokteylUsers",JSON.stringify(users));
+    renderTop(); quizBox.innerHTML="<b>🎉 100.000 TL kazandın!</b>"; return;
+  }
+  quizBox.innerHTML=`<b>${i+1}. Soru:</b> ${quizQs[i]}<br><input id="qa"/><button class="primary" onclick="submitQuiz()">Cevapla</button>`;
+}
+function submitQuiz(){
+  const v=(qa.value||"").toLowerCase();
+  quizState.q++;
+  localStorage.setItem("quizState",JSON.stringify(quizState));
+  renderQuiz();
+}
+
+function sendMoney(){
+  const to=sendTo.value.trim();
+  const amount=parseInt(sendAmount.value,10);
+  const pass=sendPass.value;
+  if(!to||!amount||amount<=0||!pass) return alert("Tüm alanları doldur");
+  if(pass!==getPass(user.name)) return alert("Kart şifresi yanlış");
+  if(!users[to]) return alert("Alıcı bulunamadı");
+  if(user.money<amount) return alert("Yetersiz bakiye");
+  user.money-=amount; users[user.name].money=user.money;
+  users[to].money=(users[to].money||0)+amount;
+  localStorage.setItem("kokteylUsers",JSON.stringify(users));
+  renderTop();
+  alert(`${to} kullanıcısına ${amount} TL gönderildi.`);
+  sendTo.value=sendAmount.value=sendPass.value="";
+}
+
+function save(){ localStorage.setItem("kokteylDB", JSON.stringify(db)); render(); }
+function addMat(){ const v=matInput.value.trim(); if(!v) return; db.mats.push(v); matInput.value=""; save(); }
+function addMiss(){ const v=missInput.value.trim(); if(!v) return; db.miss.push(v); missInput.value=""; save(); }
+function del(type,i){ db[type].splice(i,1); save(); }
+function addRecipe(){
+  if(!isVIP() && db.recipes.length>=5) return alert("VIP değilsen en fazla 5 tarif.");
+  const name=recName.value.trim(), mats=recMats.value.split(",").map(x=>x.trim()).filter(Boolean), how=recHow.value.trim();
+  if(!name||!mats.length) return alert("Ad ve malzeme gir");
+  db.recipes.push({name,mats,how}); recName.value=""; recMats.value=""; save();
+}
+function missingList(mats){ const have=db.mats.map(x=>x.toLowerCase()); return mats.filter(m=>!have.includes(m.toLowerCase())); }
+function render(){
+  matList.innerHTML=db.mats.map((m,i)=>`<li>${m}<button class="danger" onclick="del('mats',${i})">Sil</button></li>`).join("");
+  missList.innerHTML=db.miss.map((m,i)=>`<li>${m}<button class="danger" onclick="del('miss',${i})">Sil</button></li>`).join("");
+  recipes.innerHTML=db.recipes.map((r,i)=>`<div class="card"><b>${r.name}</b><div><small>Malzemeler:</small> ${r.mats.join(", ")}</div><div><small>Yapılış:</small> ${r.how||"-"}</div><button class="danger" onclick="del('recipes',${i})">Tarifi Sil</button></div>`).join("");
+}
+render();
+</script>
+</body>
+</html>
